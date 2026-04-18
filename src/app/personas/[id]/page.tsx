@@ -161,7 +161,7 @@ export default function PersonaPage({ params }: { params: Promise<{ id: string }
 
       {/* ── CTA ── */}
       <div className="mt-10 text-center">
-        <Link href="/(main)/chat">
+        <Link href="/chat">
           <Button size="lg" className="px-12">
             与 {persona.name} 开始对话 →
           </Button>

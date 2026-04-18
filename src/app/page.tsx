@@ -80,7 +80,7 @@ export default function HomePage() {
           </p>
 
           <div className="flex items-center justify-center gap-4 pt-2">
-            <Link href="/(main)/chat">
+            <Link href="/chat">
               <Button size="lg" className="text-base px-8">
                 开始对话
                 <span className="ml-2">→</span>
@@ -175,7 +175,7 @@ export default function HomePage() {
           <span>Prismatic Pro — 借卓越灵魂之力</span>
           <div className="flex items-center gap-4">
             <Link href="/admin" className="hover:text-[var(--color-text-secondary)] transition-colors">管理后台</Link>
-            <Link href="/(main)/chat" className="hover:text-[var(--color-text-secondary)] transition-colors">开始使用</Link>
+            <Link href="/chat" className="hover:text-[var(--color-text-secondary)] transition-colors">开始使用</Link>
           </div>
         </div>
       </footer>
