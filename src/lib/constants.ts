@@ -125,6 +125,8 @@ export const RBAC_PERMISSIONS = {
   OPERATOR: ['personas:read', 'campaigns:write', 'stats:read'],
   ANALYST: ['stats:read', 'export:read', 'cost:read'],
   SUPPORT: ['users:read', 'tickets:write'],
+  MODERATOR: ['personas:read', 'stats:read'],
+  GUEST: [],
   USER: [],
 } as const;
 

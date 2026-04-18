@@ -9,7 +9,7 @@ export type ConversationMode = 'solo' | 'prism' | 'roundtable' | 'epoch' | 'orac
 export type EngagementLevel = 'casual' | 'regular' | 'power';
 export type PaymentIntent = 'free' | 'trial' | 'paid';
 export type UnlockTrigger = 'mastery' | 'purchase' | 'admin';
-export type Role = 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+export type Role = 'USER' | 'ADMIN' | 'SUPER_ADMIN' | 'MODERATOR' | 'GUEST';
 
 // ── Memory Types ──────────────────────────────────────────────
 

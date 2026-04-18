@@ -1,7 +1,7 @@
 import { RBAC_PERMISSIONS } from '@/lib/constants';
 import type { Role } from '@/lib/types';
 
-const ROLES: Role[] = ['ADMIN', 'MODERATOR', 'USER', 'GUEST'];
+const ROLES: Role[] = ['ADMIN', 'SUPER_ADMIN', 'MODERATOR', 'USER', 'GUEST'];
 
 export default function RolesPage() {
   return (
@@ -31,7 +31,7 @@ export default function RolesPage() {
                 <p className="text-sm text-[var(--color-text-tertiary)] italic">该角色仅拥有基础访问权限</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {perms.map(perm => (
+                  {perms.map((perm: string) => (
                     <span
                       key={perm}
                       className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono bg-[var(--color-bg-base)] border border-[var(--color-border)] text-[var(--color-text-secondary)]"

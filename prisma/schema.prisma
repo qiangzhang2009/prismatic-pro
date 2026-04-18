@@ -42,6 +42,8 @@ enum Role {
   USER
   ADMIN
   SUPER_ADMIN
+  MODERATOR
+  GUEST
 }
 
 // ── Subscription ─────────────────────────────────────────────
