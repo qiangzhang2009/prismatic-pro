@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prismatic Pro
 
-## Getting Started
+借卓越灵魂之力，做更明智的决策。
 
-First, run the development server:
+## 技术栈
+
+- **框架**: Next.js 16 (App Router) + TypeScript
+- **样式**: Tailwind CSS v4 + CSS Variables
+- **数据库**: Prisma + Neon PostgreSQL
+- **AI**: User-Pays (用户自备 API Key)
+- **认证**: Magic Link + NextAuth v5
+- **支付**: Stripe (订阅)
+
+## 快速开始
 
 ```bash
+cd prismatic-pro
+npm install
+npx prisma generate
+# 配置环境变量
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 环境变量
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# .env.local
+DATABASE_URL="postgresql://..."
+ENCRYPTION_KEY="your-32-byte-random-key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 可选：平台 DeepSeek Key（无用户 Key 时的体验回退）
+PLATFORM_DEEPSEEK_KEY="sk-..."
+```
 
-## Learn More
+## 架构
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/              # Next.js App Router 页面
+│   ├── (main)/chat  # 主对话页（流式输出）
+│   ├── personas/     # 人物档案馆
+│   ├── admin/       # 后台管理
+│   └── api/         # API 路由
+├── components/
+│   ├── ui/          # 共享 UI 组件
+│   └── admin/       # 管理组件
+└── lib/
+    ├── personas/    # Persona 数据层（蒸馏核心）
+    ├── memory/       # 四层记忆系统
+    ├── orchestrator/ # 多智能体编排器
+    ├── llm/          # LLM 网关
+    ├── billing/      # User-Pays 计费
+    ├── game/         # 游戏化系统
+    ├── analytics/    # 行为采集
+    ├── admin/        # 后台管理逻辑
+    └── knowledge/    # 知识图谱
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 关键设计
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **User-Pays**: 开发者零基础设施成本，用户自备 API Key
+- **无向量检索**: Persona 核心 JSON 直接注入 Prompt
+- **四层记忆**: ShortTerm → WorkingMemory → LongTerm → Crystallized
+- **真实多智能体**: Sprint Pipeline (Think→Plan→Build→Review→Test→Ship)
 
-## Deploy on Vercel
+## 订阅等级
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 等级 | 价格 | Personas | 对话模式 |
+|------|------|----------|----------|
+| Free | 免费 | 5个 | Solo + Prism |
+| Pro | ¥30/月 | 20个 | 全部模式 |
+| Pro+ | ¥80/月 | 全部 | + 蒸馏 Studio |

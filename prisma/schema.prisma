@@ -1,0 +1,247 @@
+// This is your Prisma schema file,
+// learn more about it in our docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User & Auth ──────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  email        String?   @unique
+  name         String?
+  avatarUrl    String?
+  role         Role      @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // ── User-Pays API Key (AES-256-GCM) ──────────────────────
+  apiKeyEncrypted String?  // encrypted key, never plaintext
+  apiKeyIv        String?  // initialization vector (16 bytes)
+  apiKeyHash      String?  // first 8 chars hash for masked display
+  apiKeySetAt     DateTime?
+  apiKeyProvider  String?  @default("deepseek") // deepseek | openai | anthropic
+  apiKeyStatus    String?  @default("inactive")  // inactive | valid | invalid | expired
+
+  // Relations
+  subscription   Subscription?
+  conversations  Conversation[]
+  memoryEntries  MemoryEntry[]
+  gameProgress   GameProgress[]
+  profile        UserProfile?
+  auditLogs      AuditLog[]
+  points         PointTransaction[]
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// ── Subscription ─────────────────────────────────────────────
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  plan               SubscriptionPlan   @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  startedAt          DateTime           @default(now())
+  expiresAt          DateTime?
+  stripeCustomerId   String?
+  stripeSubId        String?
+  stripePriceId      String?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  updatedAt          DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO      // ¥30/month
+  PRO_PLUS // ¥80/month
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+// ── Conversations & Messages ──────────────────────────────────
+model Conversation {
+  id           String    @id @default(cuid())
+  userId       String
+  mode         String    // solo | prism | roundtable | epoch | oracle | synthesis
+  personaIds   String[]
+  messageCount Int       @default(0)
+  totalTokens Int        @default(0)
+  archived    Boolean    @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // user | assistant | system
+  content        String   @db.Text
+  personaId      String?  // which persona responded
+  tokensUsed     Int?
+  latencyMs      Int?
+  providerUsed   String?  // deepseek | openai | anthropic (anonymous aggregate)
+  modelUsed      String?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// ── Four-Layer Memory System ─────────────────────────────────
+model MemoryEntry {
+  id          String     @id @default(cuid())
+  userId      String
+  content     String     @db.Text
+  tier        MemoryTier @default(WORKING)
+  confidence  Float      @default(0.5) // 0-1
+  supersededBy String?
+  supersedes  String[]   @default([])
+  tags        String[]   @default([])
+  source      String?    // source persona or system
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, tier])
+  @@index([userId, confidence])
+}
+
+enum MemoryTier {
+  SHORT_TERM
+  WORKING
+  LONG_TERM
+  CRYSTALLIZED
+}
+
+// ── Game & Gamification ──────────────────────────────────────
+model GameProgress {
+  id                    String   @id @default(cuid())
+  userId                String
+  personaId             String
+  mastery               Int      @default(0) // 0-100
+  achievements          String[] @default([]) // achievement IDs
+  dailyQuestsCompleted  Int      @default(0)
+  lastDailyReset        DateTime @default(now())
+  totalConversations    Int      @default(0)
+  totalMessages         Int      @default(0)
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, personaId])
+}
+
+model PointTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int      // positive = credit, negative = debit
+  reason      String   // reason for transaction
+  balance     Int      @default(0) // balance after transaction
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ── User Analytics ───────────────────────────────────────────
+model UserProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  tags        String[] @default([]) // domain preferences: philosophy/business/tech/...
+  engagement         String   @default("casual") // casual | regular | power
+  paymentIntent     String   @default("free")  // free | trial | paid
+  topPersonas String[] @default([])
+  lastActive  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  eventType  String
+  payload    Json     @default("{}")
+  sessionId  String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, eventType])
+  @@index([createdAt])
+}
+
+// ── Admin: Audit Log ──────────────────────────────────────────
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String   // LOGIN | LOGOUT | USER_BAN | USER_UNBAN | USER_DELETE | DATA_EXPORT | SUBSCRIPTION_UPDATE | POINT_ADJUST
+  resourceType String   // user | subscription | point | system
+  resourceId   String?
+  metadata     Json     @default("{}")
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ── Admin: Platform Cost Snapshot ─────────────────────────────
+model PlatformCostSnapshot {
+  id              String   @id @default(cuid())
+  statMonth       DateTime @unique // first day of month
+  vercelCost      Decimal  @default(0)
+  neonCost        Decimal  @default(0)
+  r2Cost          Decimal  @default(0)
+  stripeCost      Decimal  @default(0) // payment processing fees
+  totalCost       Decimal  @default(0)
+  mrr             Decimal  @default(0) // monthly recurring revenue
+  arr             Decimal  @default(0) // mrr × 12
+  activeSubs      Int      @default(0)
+  proSubs         Int      @default(0)
+  proPlusSubs     Int      @default(0)
+  churnedSubs     Int      @default(0)
+  totalMessages   Int      @default(0)
+  avgTokensPerMsg Int      @default(0)
+  keyUsersCount   Int      @default(0)
+  noKeyUsersCount Int      @default(0)
+  providerBreakdown Json    @default("{}") // {"deepseek":60,"openai":30,"anthropic":10}
+  createdAt       DateTime @default(now())
+
+  @@index([statMonth])
+}
+
+// ── Admin: API Usage Aggregate (anonymous) ──────────────────
+model UserApiKeyUsageAggregate {
+  id          String   @id @default(cuid())
+  statDate    DateTime @db.Date
+  provider    String   // deepseek | openai | anthropic
+  totalCalls  Int      @default(0)
+  totalTokens Int      @default(0)
+
+  @@unique([statDate, provider])
+  @@index([statDate])
+}
